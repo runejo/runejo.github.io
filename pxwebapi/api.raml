@@ -1,0 +1,177 @@
+#%RAML 1.0
+
+title: PxWebApiRaml
+version: v0
+mediaType: application/json
+protocols: [HTTP, HTTPS]
+baseUri: https://data.ssb.no/api/{version}/{language}
+baseUriParameters:
+  language:
+    enum: [en, no]
+types:
+#  Database:
+#    properties:
+#      dbid: string
+#      text: string
+#    example:
+#      dbid: table
+#      text: prodno
+  MenuItem:
+    properties:
+      id: string
+      type:
+        enum: [l, t]
+      text: string
+      updated?: datetime-only
+    example:
+      id: al
+      type: l
+      text: "Labour market and earnings"
+#  TableMenuItem:
+#    type: MenuItem
+#    example:
+#      id: ArbledSessNY
+#      type: t
+#      text: "07458: Employment and unemployment, seasonally adjusted, by age. Resident population 1997K1 - 2018K3"
+#      updated: 2018-10-25T08:00:00
+  TableMetadata:
+    properties:
+      title: string
+      variables: Variable[]
+  Variable:
+    properties:
+      code: string
+      text: string
+      values: string[]
+      valueTexts: string[]
+      time?: boolean
+      elimination?: boolean
+  TableQuery:
+    properties:
+      query: Selection[]
+      response:
+        properties:
+          format:
+            enum: [json-stat, csv, xlsx]
+  Selection:
+    properties:
+      code: string
+      selection:
+        properties:
+          filter:
+            enum: [all, item]
+          values: string[]
+
+resourceTypes:
+  Collection:
+    get:
+      responses:
+        200:
+          body:
+            type: <<item>>[]
+
+#/:
+#  description: List availible databases
+#  type:  { Collection: {item : Database} }
+#
+#/{dbid}:
+#  description: List main topics
+#  type:  { Collection: {item : LevelMenuItem } }
+#
+#  /{path}:
+#    description: List sub topcics (or datasets)
+#    type:  { Collection: {item : LevelMenuItem } }
+
+/table:
+  description: List main topics
+  type:  { Collection: {item : MenuItem } }
+
+  /{path}:
+    description: List sub topcics (or datasets)
+    type:  { Collection: {item : MenuItem } }
+
+/table/{id}:
+  get:
+    description: Get description of dataset
+    responses:
+      200:
+        body:
+          #type: TableMetadata
+          properties:
+            title: string
+            variables: Variable[]
+          example: |
+            {
+              "title": "11151: Unemployed persons not registered as resident, by country background, age, contents and quarter",
+              "variables": [
+                {
+                  "code": "Lanbakgrunn",
+                  "text": "country background",
+                  "values": [
+                    "03",
+                    "000",
+                    "1",
+                    "2",
+                    "3",
+                    "099"
+                  ],
+                  "valueTexts": [
+                    "Total",
+                    "Norway",
+                    "The Nordic countries else",
+                    "Western Europe else",
+                    "EU countries in Eastern Europe",
+                    "Other countries"
+                  ],
+                  "elimination": true
+                },
+                {
+                  "code": "Alder",
+                  "text": "age",
+                  "values": [
+                    "Ialt",
+                    "15-29",
+                    "30+"
+                  ],
+                  "valueTexts": [
+                    "Total",
+                    "15-29 years",
+                    "30 years or older"
+                  ],
+                  "elimination": true
+                },
+                {
+                  "code": "ContentsCode",
+                  "text": "contents",
+                  "values": [
+                    "Personer"
+                  ],
+                  "valueTexts": [
+                    "Unemployd persons not registered as resident"
+                  ]
+                },
+                {
+                  "code": "Tid",
+                  "text": "quarter",
+                  "values": [
+                    "2018K1",
+                    "2018K2",
+                    "2018K3"
+                  ],
+                  "valueTexts": [
+                    "2018K1",
+                    "2018K2",
+                    "2018K3"
+                  ],
+                  "time": true
+                }
+              ]
+            }
+  post:
+    description: Submit query and output format
+    body:
+      application/json:
+        type: TableQuery
+    responses:
+      200:
+        description: Dataset in your selected output format
